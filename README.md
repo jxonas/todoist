@@ -1,4 +1,4 @@
 todoist
 =======
 
-Racket interface to Todoist Sync API
+Racket interface to Todoist API
