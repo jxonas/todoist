@@ -17,6 +17,7 @@
     [(pregexp "^HTTP/(.*)\\s(\\d+)\\s(\\S*)$" (list _ version code message))
      (values version (string->number code) message)]))
 
+(provide ->jsexpr)
 (define (->jsexpr x)
   (match x
     [(response status-line header body) (string->jsexpr body)]
@@ -81,12 +82,14 @@
                       [r (in-list (syntax-e #'(opt.racket ...)))])
              (list* k (list r #''default) l))])
 
-       #`(define (name.racket arg.racket ... #,@#'optionals)
-           (define data (list (cons 'arg.js arg.racket) ...))
-           (unless (eq? opt.racket 'default)
-             (set! data (cons (cons 'opt.js opt.racket) data)))
-           ...
-           (request name.js data #:method "GET")))]
+       #`(begin
+           (define (name.racket arg.racket ... #,@#'optionals)
+             (define data (list (cons 'arg.js arg.racket) ...))
+             (unless (eq? opt.racket 'default)
+               (set! data (cons (cons 'opt.js opt.racket) data)))
+             ...
+             (request name.js data #:method "GET"))
+           (provide name.racket)))]
     [(_ name:operation arg:argument ...)
      #'(define-api/get name arg ... :)]))
 
