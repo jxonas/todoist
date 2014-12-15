@@ -1,4 +1,4 @@
-#lang racket/base
+#lang at-exp racket/base
 
 (require (for-syntax racket/base
                      racket/syntax
@@ -8,7 +8,9 @@
          net/uri-codec
          racket/format
          racket/match
-         racket/port)
+         racket/port
+         scribble/srcdoc
+         (for-doc racket/base scribble/manual))
 
 (struct response (status-line header body))
 
@@ -89,7 +91,11 @@
                (set! data (cons (cons 'opt.js opt.racket) data)))
              ...
              (request name.js data #:method "GET"))
-           (provide name.racket)))]
+           (provide/doc
+            [thing-doc name.racket procedure?
+                       @{See @link[(format "http://todoist.com/API/#/API/~a" name.js)
+                                           (format "/API/~a" name.js)]
+                         for details.}])))]
     [(_ name:operation arg:argument ...)
      #'(define-api/get name arg ... :)]))
 
