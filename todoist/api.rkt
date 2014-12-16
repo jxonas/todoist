@@ -44,6 +44,12 @@
     (parse-status-line (response-status-line r)))
   code)
 
+(provide/doc
+ [proc-doc/names response-code
+                 (-> response? integer?)
+                 (response)
+                 @{Response code.}])
+
 (define (response-message r)
   (define-values (version code message)
     (parse-status-line (response-status-line r)))
@@ -119,7 +125,7 @@
        #`(begin
            (define (name.racket arg.racket ... #,@#'optionals)
              (define data (list (cons 'arg.js arg.racket) ...))
-             (unless (eq? opt.racket opt.default)
+             (unless (eq? opt.racket 'default)
                (set! data (cons (cons 'opt.js opt.racket) data)))
              ...
              (request name.js data #:method "GET"))
