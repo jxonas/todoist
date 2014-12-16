@@ -106,7 +106,9 @@
                    #:data (alist->form-urlencoded data)))
   (response status-line header (port->string body)))
 
-
+(define (normalize-data data)
+  (for/list ([d (in-list data)])
+    (cons (car d) (~a (cdr d)))))
 
 (define-syntax (define-api/get stx)
 
@@ -163,7 +165,7 @@
              (unless (eq? opt.racket 'default)
                (set! data (cons (cons 'opt.js opt.racket) data)))
              ...
-             (request name.js data #:method "GET"))
+             (request name.js (normalize-data data) #:method "GET"))
            (provide
             [proc-doc/names name.racket
                             (->* (arg.contract ...) (#,@#'doc-optionals) response?)
