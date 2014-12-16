@@ -6,54 +6,89 @@
          json
          net/http-client
          net/uri-codec
+         racket/contract
          racket/format
          racket/match
-         racket/contract
          racket/port
          scribble/srcdoc
          (for-doc racket/base scribble/manual))
 
-(struct response (status-line header body))
-
-(provide/doc
+(provide
  [struct*-doc response
               ([status-line bytes?]
-               [header list?]
+               [headers list?]
                [body string?])
-              @{Response object returned by every API call.}])
-
-(define (parse-status-line str)
-  (match (~a str)
-    [(pregexp "^HTTP/(.*)\\s(\\d+)\\s(\\S*)$" (list _ version code message))
-     (values version (string->number code) message)]))
-
-(provide/doc
+              @{Response object returned by every API call.}]
  [proc-doc/names parse-status-line
                  (-> (or/c bytes? string?) (values string? integer? string?))
                  (status-line)
-                 @{Parse @racket[response-status-line] and return the http version, status code and message.}])
+                 @{Parse @racket[response-status-line] and return
+                   the http version, status code and message.}]
+ [proc-doc/names response-status-code
+                 (-> response? integer?)
+                 (response)
+                 @{Response code.}]
+ [proc-doc/names ->jsexpr
+                 (-> (or/c response? string? bytes?) jsexpr?)
+                 (x)
+                 @{Converts input to @racket[jsexpr?].}]
+ [proc-doc/names response-success?
+                 (-> response? boolean?)
+                 (response)
+                 @{@racket[#t] if response is a success. @racket[#f] otherwise.}])
 
-(provide ->jsexpr)
+;; Response
+
+(define HTTP_OK 200)
+
+(define ERROR_TEXT_RESPONSES
+  '("\"LOGIN_ERROR\"",
+    "\"INTERNAL_ERROR\"",
+    "\"EMAIL_MISMATCH\"",
+    "\"ACCOUNT_NOT_CONNECTED_WITH_GOOGLE\"",
+    "\"ALREADY_REGISTRED\"",
+    "\"TOO_SHORT_PASSWORD\"",
+    "\"INVALID_EMAIL\"",
+    "\"INVALID_TIMEZONE\"",
+    "\"INVALID_FULL_NAME\"",
+    "\"UNKNOWN_ERROR\"",
+    "\"ERROR_PASSWORD_TOO_SHORT\"",
+    "\"ERROR_EMAIL_FOUND\"",
+    "\"UNKNOWN_IMAGE_FORMAT\"",
+    "\"AVATAR_NOT_FOUND\"",
+    "\"UNABLE_TO_RESIZE_IMAGE\"",
+    "\"IMAGE_TOO_BIG\"",
+    "\"UNABLE_TO_RESIZE_IMAGE\"",
+    "\"ERROR_PROJECT_NOT_FOUND\"",
+    "\"ERROR_NAME_IS_EMPTY\"",
+    "\"ERROR_WRONG_DATE_SYNTAX\"",
+    "\"ERROR_ITEM_NOT_FOUND\""))
+
+(struct response (status-line headers body))
+
+(define (parse-status-line str)
+  (match (~a str)
+    [(pregexp "^HTTP/(.*)\\s+(\\d+)\\s+(.*)$" (list _ version code message))
+     (values version (string->number code) message)]))
+
 (define (->jsexpr x)
   (match x
     [(response status-line header body) (string->jsexpr body)]
     [else (string->jsexpr (~a x))]))
 
-(define (response-code r)
+(define (response-status-code r)
   (define-values (version code message)
     (parse-status-line (response-status-line r)))
   code)
-
-(provide/doc
- [proc-doc/names response-code
-                 (-> response? integer?)
-                 (response)
-                 @{Response code.}])
 
 (define (response-message r)
   (define-values (version code message)
     (parse-status-line (response-status-line r)))
   message)
+
+(define (response-success? r)
+  (and (= (response-status-code r) HTTP_OK)
+       (not (member (response-body r) ERROR_TEXT_RESPONSES))))
 
 
 (define (request op [data '()]
@@ -129,7 +164,7 @@
                (set! data (cons (cons 'opt.js opt.racket) data)))
              ...
              (request name.js data #:method "GET"))
-           (provide/doc
+           (provide
             [proc-doc/names name.racket
                             (->* (arg.contract ...) (#,@#'doc-optionals) response?)
                             ((arg.racket ...) ([opt.racket opt.default] ...))
@@ -140,6 +175,7 @@
     [(_ name:operation arg:argument ...)
      #'(define-api/get name arg ... :)]))
 
+
 ;; Users
 
 (define-api/get login email password)
@@ -148,6 +184,7 @@
   auto-signup full-name timezone lang)
 
 (define-api/get ping token)
+
 (define-api/get (get-timezones "getTimezones"))
 
 (define-api/get register email full-name password :
@@ -157,13 +194,39 @@
   reason-for-delete [in-background integer? 1])
 
 (define-api/get (update-user "updateUser") token :
-  email full-name password timezone date-format time-format
-  start-day next-week start-page default-remainder)
+  email full-name password timezone [date-format integer? 0]
+  [time-format integer? 0] [start-day integer? 1] next-week
+  start-page default-remainder)
 
 (define-api/get (update-avatar "updateAvatar") token :
-  image delete)
+  image [delete boolean? #f])
 
 (define-api/get (get-redirect-link "getRedirectLink") token :
-  path hash)
+  [path string? "/app"] hash)
 
 (define-api/get (get-productivity-stats "getProductivityStats") token)
+
+
+;; Projects
+
+(define-api/get (get-projects "getProjects") token)
+
+(define-api/get (get-project "getProject") token [project-id integer?])
+
+(define-api/get (add-project "addProject") name token :
+  [color integer? 0] [indent integer? 1] [order integer? 0])
+
+(define-api/get (update-project "updateProject") [project-id integer?] token :
+  name [color integer? 0] [indent integer? 0]
+  [order integer? 0] [collapse integer? 0])
+
+(define-api/get (update-project-orders "updateProjectOrders")
+  token [item-id-list list?])
+
+(define-api/get (delete-project "deleteProject") [project-id integer?] token)
+
+(define-api/get (get-archived "getArchived") token)
+
+(define-api/get (archive-project "archiveProject") [project-id integer?] token)
+
+(define-api/get (unarchive-project "unarchiveProject") [project-id integer?] token)
