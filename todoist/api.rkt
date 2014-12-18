@@ -110,10 +110,32 @@
   (for/list ([d (in-list data)])
     (cons (car d) (~a (cdr d)))))
 
-(define-syntax (define-api/get stx)
 
-  (define (racket->js str)
-    (regexp-replaces str '([#rx"-" "_"] [#rx"[!?*]" ""])))
+(define GET "GET")
+(define POST "POST")
+
+(define-for-syntax (racket->js str)
+  (regexp-replaces str '([#rx"-" "_"] [#rx"[!?*]" ""])))
+
+(define-syntax (api-call stx)
+
+  (define-splicing-syntax-class method-argument
+    (pattern (~optional (~seq #:method method:str)
+                        #:defaults ([method #'"GET"]))))
+
+  (define-splicing-syntax-class argument
+    (pattern (~seq key:keyword value:expr)
+             #:with js (datum->syntax #'key
+                                      (string->symbol
+                                       (racket->js
+                                        (keyword->string
+                                         (syntax-e #'key)))))))
+  (syntax-parse stx
+    [(_ METHOD:method-argument op arg:argument ...)
+     #'(request op (normalize-data (list (cons 'arg.js arg.value) ...))
+                #:method METHOD.method)]))
+
+(define-syntax (define-api stx)
 
   (define-syntax-class operation
     (pattern racket:id
@@ -145,7 +167,7 @@
 
   (syntax-parse stx
     #:datum-literals (:)
-    [(_ name:operation arg:argument ... : opt:argument ...)
+    [(_ METHOD name:operation arg:argument ... : opt:argument ...)
      (with-syntax*
          ([default (gensym)]
           [optionals
@@ -165,7 +187,7 @@
              (unless (eq? opt.racket 'default)
                (set! data (cons (cons 'opt.js opt.racket) data)))
              ...
-             (request name.js (normalize-data data) #:method "GET"))
+             (request name.js (normalize-data data) #:method METHOD))
            (provide
             [proc-doc/names name.racket
                             (->* (arg.contract ...) (#,@#'doc-optionals) response?)
@@ -174,74 +196,82 @@
                                                 name.js)
                                         (format "/API/~a" name.js)]
                               for details.}])))]
-    [(_ name:operation arg:argument ...)
-     #'(define-api/get name arg ... :)]))
+    [(_ METHOD name:operation arg:argument ...)
+     #'(define-api METHOD name arg ... :)]))
 
 
 ;; Users
 
-(define-api/get login email password)
+(define-api GET login email password)
 
-(define-api/get (login-with-google "loginWithGoogle") email oauth2-token :
+(define-api GET (login-with-google "loginWithGoogle") email oauth2-token :
   auto-signup full-name timezone lang)
 
-(define-api/get ping token)
+(define-api GET ping token)
 
-(define-api/get (get-timezones "getTimezones"))
+(define-api GET (get-timezones "getTimezones"))
 
-(define-api/get register email full-name password :
+(define-api GET register email full-name password :
   lang timezone)
 
-(define-api/get (delete-user "deleteUser") token current-password :
+(define-api GET (delete-user "deleteUser") token current-password :
   reason-for-delete [in-background integer? 1])
 
-(define-api/get (update-user "updateUser") token :
+(define-api GET (update-user "updateUser") token :
   email full-name password timezone [date-format integer? 0]
   [time-format integer? 0] [start-day integer? 1] next-week
   start-page default-remainder)
 
-(define-api/get (update-avatar "updateAvatar") token :
+(define-api GET (update-avatar "updateAvatar") token :
   image [delete boolean? #f])
 
-(define-api/get (get-redirect-link "getRedirectLink") token :
+(define-api GET (get-redirect-link "getRedirectLink") token :
   [path string? "/app"] hash)
 
-(define-api/get (get-productivity-stats "getProductivityStats") token)
+(define-api GET (get-productivity-stats "getProductivityStats") token)
 
 
 ;; Projects
 
-(define-api/get (get-projects "getProjects") token)
+(define-api GET (get-projects "getProjects") token)
 
-(define-api/get (get-project "getProject") token [project-id integer?])
+(define-api GET (get-project "getProject") token [project-id integer?])
 
-(define-api/get (add-project "addProject") name token :
+(define-api GET (add-project "addProject") name token :
   [color integer? 0] [indent integer? 1] [order integer? 0])
 
-(define-api/get (update-project "updateProject") [project-id integer?] token :
+(define-api GET (update-project "updateProject") [project-id integer?] token :
   name [color integer? 0] [indent integer? 0]
   [order integer? 0] [collapse integer? 0])
 
-(define-api/get (update-project-orders "updateProjectOrders")
+(define-api GET (update-project-orders "updateProjectOrders")
   token [item-id-list list?])
 
-(define-api/get (delete-project "deleteProject") [project-id integer?] token)
+(define-api GET (delete-project "deleteProject") [project-id integer?] token)
 
-(define-api/get (get-archived "getArchived") token)
+(define-api GET (get-archived "getArchived") token)
 
-(define-api/get (archive-project "archiveProject") [project-id integer?] token)
+(define-api GET (archive-project "archiveProject") [project-id integer?] token)
 
-(define-api/get (unarchive-project "unarchiveProject") [project-id integer?] token)
+(define-api GET (unarchive-project "unarchiveProject") [project-id integer?] token)
 
 
 ;; Labels
 
-(define-api/get (get-labels "getLabels") token : [as-list integer? 0])
+(define-api GET (get-labels "getLabels") token : [as-list? integer? 0])
 
-(define-api/get (add-label "addLabel") name token : color)
+(define-api GET (add-label "addLabel") name token : color)
 
-(define-api/get (update-label "updateLabel") old-name new-name token)
+(define-api GET (update-label "updateLabel") old-name new-name token)
 
-(define-api/get (update-label-color "updateLabelColor") name color token)
+(define-api GET (update-label-color "updateLabelColor") name color token)
 
-(define-api/get (delete-label "deleteLabel") name token)
+(define-api GET (delete-label "deleteLabel") name token)
+
+
+(provide
+ [form-doc (api-call operation:id
+                     [key:keyword value]
+                     ...
+                     (~optional #:method method:str))
+           @{}])
