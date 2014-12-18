@@ -4,7 +4,8 @@
           scribble/basic
           scribble/extract
           (for-label racket/base
-                     "api.rkt"))
+                     "private/response.rkt"
+                     "private/api/users.rkt"))
 
 @title[#:tag "top"]{Todoist}
 @author[(author+email "Jonas Rodrigues" "jxonas@gmail.com")]
@@ -15,6 +16,17 @@ This documentation does not describe meaning of API calls; it only describes the
 
 @local-table-of-contents[]
 
-@section[#:tag "todoist"]{API}
+@section[#:tag "todoist"]{Todoist API}
 @defmodule[todoist/api]
-@include-extracted["api.rkt"]
+
+@subsection[#:tag "response"]{Response}
+@;@defmodule[todoist/private/response]
+
+The bindings documented in this section are provided by the
+@racketmodname[todoist/api] and @racketmodname[todoist/private/api/users] modules.
+
+@include-extracted["private/response.rkt"]
+
+@subsection[#:tag "user"]{User}
+@defmodule[todoist/private/api/users]
+@include-extracted["private/api/users.rkt"]
