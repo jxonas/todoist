@@ -232,3 +232,16 @@
 (define-api/get (archive-project "archiveProject") [project-id integer?] token)
 
 (define-api/get (unarchive-project "unarchiveProject") [project-id integer?] token)
+
+
+;; Labels
+
+(define-api/get (get-labels "getLabels") token : [as-list integer? 0])
+
+(define-api/get (add-label "addLabel") name token : color)
+
+(define-api/get (update-label "updateLabel") old-name new-name token)
+
+(define-api/get (update-label-color "updateLabelColor") name color token)
+
+(define-api/get (delete-label "deleteLabel") name token)
