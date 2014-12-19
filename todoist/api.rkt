@@ -1,7 +1,18 @@
 #lang racket/base
 
-(require "private/base.rkt"
-         "private/api/users.rkt")
+(require scribble/extract)
 
-(provide (all-from-out "private/base.rkt"
-                       "private/api/users.rkt"))
+(require "api/base.rkt"
+         "api/response.rkt"
+         "api/users.rkt"
+         "api/projects.rkt"
+         "api/labels.rkt")
+
+
+(provide (all-from-out "api/base.rkt"
+                       "api/response.rkt"
+                       "api/users.rkt"
+                       "api/projects.rkt"
+                       "api/labels.rkt"))
+
+

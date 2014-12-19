@@ -3,75 +3,46 @@
 (require (for-syntax racket/base
                      racket/syntax
                      syntax/parse)
-         json
          net/http-client
          net/uri-codec
          racket/contract
          racket/format
-         racket/match
          racket/port
          scribble/srcdoc
-         (for-doc racket/base scribble/manual))
+         (for-doc racket/base scribble/manual)
+         "response.rkt")
 
-(provide (all-defined-out))
+(provide GET POST
+         request
+         define-api)
 
-#;
-(provide
- define-api
- GET POST
- [struct*-doc response
-              ([status-line bytes?]
-               [headers list?]
-               [body string?])
-              @{Response object returned by every API call.}]
- [proc-doc/names parse-status-line
-                 (-> (or/c bytes? string?) (values string? integer? string?))
-                 (status-line)
-                 @{Parse @racket[response-status-line] and return
-                   the http version, status code and message.}]
- [proc-doc/names response-status-code
-                 (-> response? integer?)
-                 (response)
-                 @{Response code.}]
- [proc-doc/names ->jsexpr
-                 (-> (or/c response? string? bytes?) jsexpr?)
-                 (x)
-                 @{Converts input to @racket[jsexpr?].}]
- [proc-doc/names response-success?
-                 (-> response? boolean?)
-                 (response)
-                 @{@racket[#t] if response is a success. @racket[#f] otherwise.}])
+(define GET "GET")
+(define POST "POST")
 
-;; Response
+(define (request op [data '()]
+                 #:method [method POST]
+                 #:host [host "todoist.com"]
+                 #:headers
+                 [headers '("Content-Type: application/x-www-form-urlencoded")]
+                 #:endpoint-fmt [endpoint-fmt "/API/~a"]
+                 #:ssl? [ssl? #t])
+  (define-values (status-line header body)
+    (http-sendrecv host
+                   (format endpoint-fmt op)
+                   #:method method
+                   #:ssl? ssl?
+                   #:headers headers
+                   #:data (alist->form-urlencoded data)))
+  (response status-line header (port->string body)))
+
 
 (define (normalize-data data)
   (for/list ([d (in-list data)])
     (cons (car d) (~a (cdr d)))))
 
 
-(define GET "GET")
-(define POST "POST")
-
 (define-for-syntax (racket->js str)
   (regexp-replaces str '([#rx"-" "_"] [#rx"[!?*]" ""])))
-
-(define-syntax (api-call stx)
-
-  (define-splicing-syntax-class method-argument
-    (pattern (~optional (~seq #:method method:str)
-                        #:defaults ([method #'"GET"]))))
-
-  (define-splicing-syntax-class argument
-    (pattern (~seq key:keyword value:expr)
-             #:with js (datum->syntax #'key
-                                      (string->symbol
-                                       (racket->js
-                                        (keyword->string
-                                         (syntax-e #'key)))))))
-  (syntax-parse stx
-    [(_ METHOD:method-argument op arg:argument ...)
-     #'(request op (normalize-data (list (cons 'arg.js arg.value) ...))
-                #:method METHOD.method)]))
 
 (define-syntax (define-api stx)
 

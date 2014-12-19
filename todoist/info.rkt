@@ -1,3 +1,3 @@
 #lang setup/infotab
 
-(define scribblings '(("api.scrbl" () (library))))
+(define scribblings '(("todoist.scrbl")))
