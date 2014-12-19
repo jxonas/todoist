@@ -7,7 +7,8 @@
          "api/users.rkt"
          "api/projects.rkt"
          "api/labels.rkt"
-         "api/items.rkt")
+         "api/items.rkt"
+         "api/notes.rkt")
 
 
 (provide (all-from-out "api/base.rkt"
@@ -15,6 +16,7 @@
                        "api/users.rkt"
                        "api/projects.rkt"
                        "api/labels.rkt"
-                       "api/items.rkt"))
+                       "api/items.rkt"
+                       "api/notes.rkt"))
 
 

@@ -7,7 +7,8 @@
                      todoist/api/users
                      todoist/api/projects
                      todoist/api/labels
-                     todoist/api/items))
+                     todoist/api/items
+                     todoist/api/notes))
 
 @title[#:style '(toc) #:tag "top"]{Todoist}
 @author[(author+email "Jonas Rodrigues" "jxonas@gmail.com")]
@@ -52,3 +53,8 @@ The bindings documented in this section are provided by the
 @subsection[#:tag "items"]{Items}
 @defmodule[todoist/api/items]
 @include-extracted[todoist/api/items]
+
+@subsection[#:tag "notes"]{Notes}
+@defmodule[todoist/api/notes]
+@include-extracted[todoist/api/notes]
+
