@@ -2,8 +2,12 @@
 
 @(require scribble/extract
           scribble/basic
-          todoist/api
-          (for-label racket/base todoist/api))
+          (for-label racket/base
+                     todoist/api/response
+                     todoist/api/users
+                     todoist/api/projects
+                     todoist/api/labels
+                     todoist/api/items))
 
 @title[#:style '(toc) #:tag "top"]{Todoist}
 @author[(author+email "Jonas Rodrigues" "jxonas@gmail.com")]
@@ -31,16 +35,20 @@ The bindings documented in this section are provided by the
 
 @subsection[#:tag "response"]{Response}
 @defmodule[todoist/api/response]
-@include-extracted["api/response.rkt"]
+@include-extracted[todoist/api/response]
 
 @subsection[#:tag "users"]{Users}
 @defmodule[todoist/api/users]
-@include-extracted["api/users.rkt"]
+@include-extracted[todoist/api/users]
 
 @subsection[#:tag "projects"]{Projects}
 @defmodule[todoist/api/projects]
-@include-extracted["api/projects.rkt"]
+@include-extracted[todoist/api/projects]
 
 @subsection[#:tag "labels"]{labels}
 @defmodule[todoist/api/labels]
-@include-extracted["api/labels.rkt"]
+@include-extracted[todoist/api/labels]
+
+@subsection[#:tag "items"]{Items}
+@defmodule[todoist/api/items]
+@include-extracted[todoist/api/items]
