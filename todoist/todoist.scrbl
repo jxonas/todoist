@@ -8,17 +8,18 @@
                      todoist/api/projects
                      todoist/api/labels
                      todoist/api/items
-                     todoist/api/notes))
+                     todoist/api/notes
+                     todoist/api/search
+                     todoist/api/files))
 
 @title[#:style '(toc) #:tag "top"]{Todoist}
 @author[(author+email "Jonas Rodrigues" "jxonas@gmail.com")]
 
 @defmodule[todoist]
 
-The module @racketmodname[todoist] hides the underlying API calls with higher-level
-abstractions that make it easy to use @link["http://en.todoist.com"]{Todoist}
-with Racket. It is built on top of @racketmodname[todoist/api], that offers a
-lower level but not less powerfull interface.
+The module @racketmodname[todoist] will eventually hide the underlying API calls
+with higher-level abstractions that make it easy to use @link["http://en.todoist.com"]{Todoist} with Racket. It will be built on top of @racketmodname[todoist/api],
+that offers a lower level but not less powerfull interface.
 
 @local-table-of-contents[]
 
@@ -58,3 +59,10 @@ The bindings documented in this section are provided by the
 @defmodule[todoist/api/notes]
 @include-extracted[todoist/api/notes]
 
+@subsection[#:tag "search"]{Date query and search}
+@defmodule[todoist/api/search]
+@include-extracted[todoist/api/search]
+
+@subsection[#:tag "files"]{File Uploads}
+@defmodule[todoist/api/files]
+@include-extracted[todoist/api/files]

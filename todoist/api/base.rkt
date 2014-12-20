@@ -19,27 +19,15 @@
 (define GET "GET")
 (define POST "POST")
 
-(define (request op [data '()]
-                 #:method [method POST]
-                 #:host [host "todoist.com"]
-                 #:headers
-                 [headers '("Content-Type: application/x-www-form-urlencoded")]
-                 #:endpoint-fmt [endpoint-fmt "/API/~a"]
-                 #:ssl? [ssl? #t])
-  (define-values (status-line header body)
-    (http-sendrecv host
-                   (format endpoint-fmt op)
-                   #:method method
-                   #:ssl? ssl?
-                   #:headers headers
-                   #:data (alist->form-urlencoded data)))
-  (response status-line header (port->string body)))
-
+(define request
+  (lambda args
+    (define-values (status-line headers port)
+      (apply http-sendrecv args))
+    (response status-line headers (port->string port))))
 
 (define (normalize-data data)
   (for/list ([d (in-list data)])
     (cons (car d) (~a (cdr d)))))
-
 
 (define-for-syntax (racket->js str)
   (regexp-replaces str '([#rx"-" "_"] [#rx"[!?*]" ""])))
@@ -78,7 +66,8 @@
     #:datum-literals (:)
     [(_ METHOD name:operation arg:argument ... : opt:argument ...)
      (with-syntax*
-         ([default (gensym)]
+         ([end-point (datum->syntax stx (format "/API/~a" (syntax-e #'name.js)))]
+          [default (gensym)]
           [optionals
            (for/fold ([l '()])
                      ([k (in-list (syntax-e #'(opt.keyword ...)))]
@@ -96,7 +85,11 @@
              (unless (eq? opt.racket 'default)
                (set! data (cons (cons 'opt.js opt.racket) data)))
              ...
-             (request name.js (normalize-data data) #:method METHOD))
+             (request "todoist.com" end-point
+                      #:method METHOD
+                      #:ssl? #t
+                      #:headers '("Content-Type: application/x-www-form-urlencoded")
+                      #:data (alist->form-urlencoded (normalize-data data))))
            (provide
             [proc-doc/names name.racket
                             (->* (arg.contract ...) (#,@#'doc-optionals) response?)
