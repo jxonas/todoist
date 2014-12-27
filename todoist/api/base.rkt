@@ -20,10 +20,11 @@
 (define POST "POST")
 
 (define request
-  (lambda args
-    (define-values (status-line headers port)
-      (apply http-sendrecv args))
-    (response status-line headers (port->string port))))
+  (make-keyword-procedure
+   (lambda (kws kw-args . rest)
+     (define-values (status-line headers port)
+       (keyword-apply http-sendrecv kws kw-args rest))
+     (response status-line headers (port->string port)))))
 
 (define (normalize-data data)
   (for/list ([d (in-list data)])
