@@ -5,7 +5,8 @@
          racket/format
          racket/match
          scribble/srcdoc
-         (for-doc racket/base scribble/manual))
+         (for-doc racket/base scribble/manual)
+         (only-in racket/bool false?))
 
 
 (define HTTP_OK 200)
@@ -57,7 +58,11 @@
 
 (define (response-success? r)
   (and (= (response-status-code r) HTTP_OK)
-       (not (member (response-body r) ERROR_TEXT_RESPONSES))))
+       (not (member (response-body r) ERROR_TEXT_RESPONSES))
+       r))
+
+(define (response-fail? r)
+  (and (not (response-success? r)) r))
 
 
 (provide
@@ -80,6 +85,10 @@
                  (x)
                  @{Converts input to @racket[jsexpr?].}]
  [proc-doc/names response-success?
-                 (-> response? boolean?)
+                 (-> response? (or/c response? false?))
                  (response)
-                 @{@racket[#t] if response is a success. @racket[#f] otherwise.}])
+                 @{response if success. @racket[#f] otherwise.}]
+ [proc-doc/names response-fail?
+                 (-> response? (or/c response? false?))
+                 (response)
+                 @{response if fail. @racket[#f] otherwise.}])
