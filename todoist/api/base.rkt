@@ -14,7 +14,8 @@
 
 (provide GET POST
          request
-         define-api)
+         define-api
+         (for-syntax racket->js))
 
 (define GET "GET")
 (define POST "POST")
